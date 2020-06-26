@@ -1,0 +1,1272 @@
+---
+output:
+  flexdashboard::flex_dashboard:
+    sourcecode: embed
+    storyboard: true
+    theme: spacelab
+    social: menu
+---
+
+
+```{r global, include=FALSE}
+library(flexdashboard)
+library(DT)    
+library(readxl)
+library(dplyr)
+library(rmarkdown)
+library(plotly)
+library(devtools)
+library(REmap)
+library(reshape2)
+library(ggplot2)
+library(plotrix)
+library(shiny)
+library(lubridate)
+
+# 清空所有环境变量
+rm(list=ls())
+
+# 宏观经济——工业
+
+# 导入所有宏观经济工业的数据
+Industrial <- read_excel("data_show/工业.xls", sheet = 2, col_name=TRUE)
+
+# 筛选出工业增加值同比和季调环比增速
+Industrial_Speed_Up <- Industrial %>% 
+  select(c(1,2,3)) %>% 
+  filter(时间>'2011-02-01'&时间<'2020-03-01')
+
+Industrial_Speed_Up_cn <- names(Industrial_Speed_Up)
+
+names(Industrial_Speed_Up) <- c('Time', 'IndustrialAdd_Jd', 'IndustrialAdd')
+
+Industrial_Speed_Up$Time <- as.Date(Industrial_Speed_Up$Time)
+
+# 筛选出主要工业行业增加值同比增速
+Industrial_Main <- Industrial %>% 
+  select("时间", starts_with("工业增加值")) 
+
+Industrial_Main$'时间' <- as.Date(Industrial_Main$'时间') 
+Industrial_Main1 <- select(Industrial_Main, c(1,4,5,6,7,11,14,28,32,35,39,42,45)) %>% 
+  filter(时间>'2019-10-01')
+
+
+Industrial_Main1_cn <- names(Industrial_Main1)
+
+names(Industrial_Main1) <- c('Time', 'Dianli', 'Dianqi', 'Fushi', 'Fangzhi', 'Heijin', 'Huagong', 'Qiche', 'Shipin', 'Tongyong', 'Yiyao', 'Youse', 'Zhuanyong')
+
+
+# 筛选出主要工业品产品指标
+Industrial_Main_Products <- Industrial %>% 
+  select("时间", starts_with("产量")) 
+
+Industrial_Main_Products$'时间' <- as.Date(Industrial_Main_Products$'时间') 
+
+Industrial_Main_Products1 <- select(Industrial_Main_Products, c(1,2,4,22,28,30,34,)) %>% 
+  filter(时间>'2019-08-01')
+
+
+Industrial_Main_Products1_cn <- names(Industrial_Main_Products1)
+
+
+names(Industrial_Main_Products1) <- c('Time', 'Yuanmei', 'Fadianliang', 'Yixi', 'Cugang', 'Youse', 'Shuini')
+
+# 筛选出工业增加值和发电量同比增速
+Industrial_teshu <- Industrial %>% 
+  select(c(1,3,48))
+  
+
+Industrial_teshu_cn <- names(Industrial_teshu)
+
+names(Industrial_teshu) <- c('Time', 'IndustrialAdd', 'PowerProduction')
+
+Industrial_teshu$Time <- as.Date(Industrial_teshu$Time) 
+
+Industrial_teshu <- Industrial_teshu %>% 
+  filter(Time>'2017-08-01')
+
+# 宏观经济——投资
+
+# 导入所有宏观经济投资的数据
+InvestAll <- read_excel("data_show/投资.xls", sheet = 2, col_name=TRUE)
+
+InvestAll_cn <- names(InvestAll)
+
+names(InvestAll) <- c('Time', 'Minjian', 'Guding', 'Nongye', 'Zhizao', 'Fangdichan', 'Jichusheshi')
+
+InvestAll$Time <- as.Date(InvestAll$Time)
+
+InvestAll_1 <- InvestAll %>% filter(Time>'2017-01-01')
+
+InvestAll_2 <- select(InvestAll_1, c(1,4,5,6,7))
+
+# 宏观经济——消费
+
+# 读取宏观经济消费的数据
+CunsumerAll <- read_excel("data_show/消费.xls", sheet = 2, col_name=TRUE)
+CunsumerAll_1 <- CunsumerAll[,c(1,2,3,4)]
+CunsumerAll_2 <- CunsumerAll[,c(1,5,6,7)]
+CunsumerAll_3 <- CunsumerAll[,c(1,8)]
+CunsumerAll_4 <- CunsumerAll[,c(1,9)]
+CunsumerAll_5 <- CunsumerAll[,c(1,10,11,12)]
+
+
+CunsumerAll_cn <- names(CunsumerAll)
+names(CunsumerAll) <- c('Time', 'SheXiao', 'Xiane', 'ShexiaoShiJi', 'Liang', 'Fuzhuang', 'RiYong', 'Qiche', 'ShiYou', 'Jiadian', 'JiaJu', 'JianCai')
+CunsumerAll$Time <- as.Date(CunsumerAll$Time)
+CunsumerAll <- CunsumerAll %>% filter(Time>'2017-02-01')
+
+
+CunsumerAll_1_cn <- names(CunsumerAll_1)
+names(CunsumerAll_1) <- c('Time', 'SheXiao', 'Xiane', 'ShexiaoShiJi')
+CunsumerAll_1 <- CunsumerAll_1 %>% filter(Time>'2017-02-01')
+CunsumerAll_1$Time <- as.Date(CunsumerAll_1$Time)
+
+
+CunsumerAll_2_cn <- names(CunsumerAll_2)
+names(CunsumerAll_2) <- c('Time', 'Liang', 'Fuzhuang', 'RiYong')
+CunsumerAll_2 <- CunsumerAll_2 %>% filter(Time>'2018-02-01')
+CunsumerAll_2$Time <- as.Date(CunsumerAll_2$Time)
+
+CunsumerAll_3_cn <- names(CunsumerAll_3)
+names(CunsumerAll_3) <- c('Time', 'Qiche')
+CunsumerAll_3 <- CunsumerAll_3 %>% filter(Time>'2018-02-01')
+CunsumerAll_3$Time <- as.Date(CunsumerAll_3$Time)
+
+
+CunsumerAll_4_cn <- names(CunsumerAll_4)
+names(CunsumerAll_4) <- c('Time', 'Shiyou')
+CunsumerAll_4 <- CunsumerAll_4 %>% filter(Time>'2018-02-01')
+CunsumerAll_4$Time <- as.Date(CunsumerAll_4$Time)
+
+
+CunsumerAll_5_cn <- names(CunsumerAll_5)
+names(CunsumerAll_5) <- c('Time', 'Jiadian', 'JiaJu', 'JianCai')
+CunsumerAll_5 <- CunsumerAll_5 %>% filter(Time>'2019-04-01')
+CunsumerAll_5$Time <- as.Date(CunsumerAll_5$Time)
+
+
+# 宏观经济——房地产
+HouseAll <- read_excel("data_show/房地产.xls", sheet = 2, col_name=TRUE)
+HouseAll_cn <- names(HouseAll)
+names(HouseAll) <- c('Time', 'XiaoShou', 'Dy70', 'Hb70', 'Touzi', 'Wancheng', 'Kaigong', 'Gouzhi')
+
+HouseAll$Time <- as.Date(HouseAll$Time)
+
+HouseAll <- filter(HouseAll, Time>'2018-02-01')
+
+
+
+
+
+
+```
+
+
+工业增速情况分析 {data-navmenu="宏观经济——工业"} 
+====================================
+
+Column {.tabset}
+-------------------------------------
+
+### 工业增加值同比和季调环比增速分析
+
+
+```{r fig.width=5}
+# 函数datatable在HTML中插入表格
+# DT packages提供了JavaScript库中的DataTables的一个R接口，使得R对象能在HTML页面上显示为表格
+DT::datatable(Industrial_Speed_Up, 
+              caption = htmltools::tags$caption('', style='font-size:18px; text-align:left, color:black; font-weight:bold'), 
+              # extensions = 'AutoFill', 
+              
+              # 具体的设置情况
+              options = list(initComplete = 
+                        JS(
+                            "function(settings, jason) {", 
+                            "$(this.api().table().header()).css({'background-color': '#4682B4',
+                                                                 'color': '#fff',
+                                                                 'font-size': '15px',
+                                                                 'font-weight': 'normal', 
+                                                                 'font-family': 'Microsoft YaHei'});",
+                            "$('body').css({'font-size':'14px','font-family': 'Microsoft YaHei'});}"
+                          ), 
+                         # autoFill=list(focus='click'),
+                         # colReorder=list(realtime=TRUE),
+                         # scrollX=TRUE,
+                         searchHight = TRUE, 
+                         language = list( info = '显示第_START_至_END_项结果，共_TOTAL_项',
+                                          search = '搜索:',
+                                          paginate = list(previous = '上页', 'next' = '下页'),
+                                          lengthMenu = '显示_MENU_项结果'),
+                         columnDefs=list(list(className='dt[-body]-center',targets='_all')),
+                         pageLength=30, 
+                        lengthMenu=c(30, 40, 50, 60, 70)
+                        ),
+              class='cell-border stripe',
+              # HTML上每一列的名字
+              colnames=Industrial_Speed_Up_cn 
+              )
+```
+
+
+
+
+
+
+
+Column {data-height = 10}
+-------------------------------------
+### 工业增速分析
+```{r}
+# 右边图片上的注释
+obs <- "工业增加值同比和季调环比增速分析" 
+valueBox(obs, icon="fa-pencil") 
+```
+
+
+
+### 趋势分析
+
+
+```{r fig.width=7, fig.height=5}
+
+# 绘制趋势图
+plotly::plot_ly(Industrial_Speed_Up, 
+                x = ~Time, # 横坐标
+                y = ~IndustrialAdd_Jd, 
+                type = 'scatter', 
+                name = "工业增加值:环比:季调",
+                mode='lines',line=list(color='#867892')) %>% 
+                add_trace(x = ~Time, 
+                          y = ~IndustrialAdd, 
+                          type="scatter", 
+                          name="工业增加值:当月同比",   
+                          mode='lines',line=list(color='#B9C4E2')) %>% 
+  
+  layout(
+    title = "工业增加值同比和季调环比增速分析",
+    xaxis = list(title="时间", showgrid = T),
+    yaxis = list(title="数值", showgrid = T),
+    showlegend = TRUE
+    #annotations = list(list(x = Industrial_Speed_Up$Time, y = Industrial_Speed_Up$IndustrialAdd,text="Peak",showarrow = T))
+  )
+
+
+```
+
+
+
+主要工业行业增加值分析 {data-navmenu="宏观经济——工业"} 
+====================================
+
+Column {.tabset}
+-------------------------------------
+
+### 主要工业行业增加同比增速分析
+
+```{r fig.width=5}
+# 函数datatable在HTML中插入表格
+# DT packages提供了JavaScript库中的DataTables的一个R接口，使得R对象能在HTML页面上显示为表格
+DT::datatable(Industrial_Main1, 
+              caption = htmltools::tags$caption('', style='font-size:18px; text-align:left, color:black; font-weight:bold'), 
+              # extensions = 'AutoFill', 
+              
+              # 具体的设置情况
+              options = list(initComplete = 
+                        JS(
+                            "function(settings, jason) {", 
+                            "$(this.api().table().header()).css({'background-color': '#4682B4',
+                                                                 'color': '#fff',
+                                                                 'font-size': '15px',
+                                                                 'font-weight': 'normal', 
+                                                                 'font-family': 'Microsoft YaHei'});",
+                            "$('body').css({'font-size':'14px','font-family': 'Microsoft YaHei'});}"
+                          ), 
+                         # autoFill=list(focus='click'),
+                         # colReorder=list(realtime=TRUE),
+                         # scrollX=TRUE,
+                         searchHight = TRUE, 
+                         language = list( info = '显示第_START_至_END_项结果，共_TOTAL_项',
+                                          search = '搜索:',
+                                          paginate = list(previous = '上页', 'next' = '下页'),
+                                          lengthMenu = '显示_MENU_项结果'),
+                         columnDefs=list(list(className='dt[-body]-center',targets='_all')),
+                         pageLength=30, 
+                        lengthMenu=c(30, 40, 50, 60, 70)
+                        ),
+              class='cell-border stripe',
+              # HTML上每一列的名字
+              colnames=Industrial_Main1_cn 
+              )
+```
+
+### 主要工业行业增加同比增速分析图
+
+
+```{r fig.width=7, fig.height=5}
+subplot(
+  plot_ly(Industrial_Main1, x= ~Time, y= ~Dianli, type = 'bar', name = "电热"), 
+  plot_ly(Industrial_Main1, x= ~Time, y= ~Dianqi, type = 'bar', name = "电气"), 
+  plot_ly(Industrial_Main1, x= ~Time, y= ~Fushi,  type = 'bar', name = "服饰"), 
+  plot_ly(Industrial_Main1, x= ~Time, y= ~Fangzhi, type = 'bar', name = "纺织"),
+  plot_ly(Industrial_Main1, x= ~Time, y= ~Heijin,  type = 'bar', name = "黑色金属"),
+  plot_ly(Industrial_Main1, x= ~Time, y= ~Huagong, type = 'bar', name = "化工"),
+  plot_ly(Industrial_Main1, x= ~Time, y= ~Qiche,   type = 'bar', name = "汽车"),
+  plot_ly(Industrial_Main1, x= ~Time, y= ~Shipin,  type = 'bar', name = "食品"),
+  plot_ly(Industrial_Main1, x= ~Time, y= ~Tongyong, type = 'bar', name = "通用设备"),
+  plot_ly(Industrial_Main1, x= ~Time, y= ~Yiyao,    type = 'bar', name = "医药"),
+  plot_ly(Industrial_Main1, x= ~Time, y= ~Youse,    type = 'bar', name = "有色金属"), 
+  plot_ly(Industrial_Main1, x= ~Time, y= ~Zhuanyong,type = 'bar', name = "专用设备")
+  ) %>% 
+  layout(
+    title = "主要工业行业增加同比增速分析图",
+    #xaxis = list(title="时间", showgrid = T),
+    yaxis = list(title="数值", showgrid = T),
+    showlegend = TRUE
+    #annotations = list(list(x = Industrial_Speed_Up$Time, y = Industrial_Speed_Up$IndustrialAdd,text="Peak",showarrow = T))
+  )
+    
+
+
+```
+
+
+
+主要工业品产量增速分析 {data-navmenu="宏观经济——工业"} 
+====================================
+
+Column {.tabset}
+-------------------------------------
+
+### 主要工业品产量增速分析
+
+```{r fig.width=5}
+# 函数datatable在HTML中插入表格
+# DT packages提供了JavaScript库中的DataTables的一个R接口，使得R对象能在HTML页面上显示为表格
+DT::datatable(Industrial_Main_Products1, 
+              caption = htmltools::tags$caption('', style='font-size:18px; text-align:left, color:black; font-weight:bold'), 
+              # extensions = 'AutoFill', 
+              
+              # 具体的设置情况
+              options = list(initComplete = 
+                        JS(
+                            "function(settings, jason) {", 
+                            "$(this.api().table().header()).css({'background-color': '#4682B4',
+                                                                 'color': '#fff',
+                                                                 'font-size': '15px',
+                                                                 'font-weight': 'normal', 
+                                                                 'font-family': 'Microsoft YaHei'});",
+                            "$('body').css({'font-size':'14px','font-family': 'Microsoft YaHei'});}"
+                          ), 
+                         # autoFill=list(focus='click'),
+                         # colReorder=list(realtime=TRUE),
+                         # scrollX=TRUE,
+                         searchHight = TRUE, 
+                         language = list( info = '显示第_START_至_END_项结果，共_TOTAL_项',
+                                          search = '搜索:',
+                                          paginate = list(previous = '上页', 'next' = '下页'),
+                                          lengthMenu = '显示_MENU_项结果'),
+                         columnDefs=list(list(className='dt[-body]-center',targets='_all')),
+                         pageLength=30, 
+                        lengthMenu=c(30, 40, 50, 60, 70)
+                        ),
+              class='cell-border stripe',
+              # HTML上每一列的名字
+              colnames=Industrial_Main_Products1_cn 
+              )
+```
+
+
+### 工业增加值与发电量同比增速分析
+
+
+
+```{r fig.width=7, fig.height=5}
+
+# 绘制趋势图
+plotly::plot_ly(Industrial_teshu, 
+                x = ~Time, # 横坐标
+                y = ~IndustrialAdd, 
+                type = 'bar', 
+                name = "工业增加值同比" 
+                ) %>% 
+                add_trace(x = ~Time, 
+                          y = ~PowerProduction, 
+                          type="bar", 
+                          name="发电量同比"   
+                          ) %>% 
+                add_trace(x = ~Time, 
+                          y = ~PowerProduction, 
+                          type="scatter", 
+                          name="发电量同比",
+                          mode='lines', 
+                          line=list(color='#B9C4E2')
+                          ) %>% 
+                add_trace(x = ~Time, 
+                          y = ~IndustrialAdd, 
+                          type="scatter", 
+                          name="工业增长值",
+                          mode='lines', 
+                          line=list(color='#4182B4')
+                          ) %>%
+  layout(
+    title = "工业增加值与发电量同比增速分析",
+    xaxis = list(title="时间", showgrid = T),
+    yaxis = list(title="数值", showgrid = T),
+    showlegend = TRUE
+    #annotations = list(list(x = Industrial_Speed_Up$Time, y = Industrial_Speed_Up$IndustrialAdd,text="Peak",showarrow = T))
+  )
+
+
+```
+
+
+
+
+Column {data-height = 10}
+-------------------------------------
+### 主要工业品产量增速分析
+```{r}
+# 右边图片上的注释
+obs <- "主要工业品产量增速分析" 
+valueBox(obs, icon="fa-pencil") 
+```
+
+### 分布分析
+
+
+```{r fig.width=7, fig.height=5}
+subplot(
+  plot_ly(Industrial_Main_Products1, x= ~Time, y= ~Yuanmei, type = 'bar', name = "原煤"), 
+  plot_ly(Industrial_Main_Products1, x= ~Time, y= ~Fadianliang, type = 'bar', name = "发电量"), 
+  plot_ly(Industrial_Main_Products1, x= ~Time, y= ~Yixi,  type = 'bar', name = "乙烯"), 
+  plot_ly(Industrial_Main_Products1, x= ~Time, y= ~Cugang, type = 'bar', name = "粗钢"),
+  plot_ly(Industrial_Main_Products1, x= ~Time, y= ~Youse,  type = 'bar', name = "有色金属"),
+  plot_ly(Industrial_Main_Products1, x= ~Time, y= ~Shuini, type = 'bar', name = "水泥")
+  ) %>% 
+  layout(
+    title = "主要工业行业增加同比增速分析图",
+    #xaxis = list(title="时间", showgrid = T),
+    yaxis = list(title="数值", showgrid = T),
+    showlegend = TRUE
+    #annotations = list(list(x = Industrial_Speed_Up$Time, y = Industrial_Speed_Up$IndustrialAdd,text="Peak",showarrow = T))
+  )
+```
+
+
+
+
+
+
+
+
+固定资产投资、民间投资增速分析 {data-navmenu="宏观经济——投资"} 
+====================================
+
+Column {.tabset}
+-------------------------------------
+
+### 固定资产投资、民间投资增速分析
+
+
+```{r fig.width=5}
+# 函数datatable在HTML中插入表格
+# DT packages提供了JavaScript库中的DataTables的一个R接口，使得R对象能在HTML页面上显示为表格
+DT::datatable(InvestAll_1, 
+              caption = htmltools::tags$caption('', style='font-size:18px; text-align:left, color:black; font-weight:bold'), 
+              # extensions = 'AutoFill', 
+              
+              # 具体的设置情况
+              options = list(initComplete = 
+                        JS(
+                            "function(settings, jason) {", 
+                            "$(this.api().table().header()).css({'background-color': '#4682B4',
+                                                                 'color': '#fff',
+                                                                 'font-size': '15px',
+                                                                 'font-weight': 'normal', 
+                                                                 'font-family': 'Microsoft YaHei'});",
+                            "$('body').css({'font-size':'14px','font-family': 'Microsoft YaHei'});}"
+                          ), 
+                         # autoFill=list(focus='click'),
+                         # colReorder=list(realtime=TRUE),
+                         # scrollX=TRUE,
+                         searchHight = TRUE, 
+                         language = list( info = '显示第_START_至_END_项结果，共_TOTAL_项',
+                                          search = '搜索:',
+                                          paginate = list(previous = '上页', 'next' = '下页'),
+                                          lengthMenu = '显示_MENU_项结果'),
+                         columnDefs=list(list(className='dt[-body]-center',targets='_all')),
+                         pageLength=30, 
+                        lengthMenu=c(30, 40, 50, 60, 70)
+                        ),
+              class='cell-border stripe',
+              # HTML上每一列的名字
+              colnames=InvestAll_cn
+              )
+```
+
+
+### 固定资产投资、民间投资增速分析趋势图
+
+
+
+```{r fig.width=7, fig.height=5}
+
+# 绘制趋势图
+plotly::plot_ly(InvestAll_1, 
+                x = ~Time, # 横坐标
+                y = ~Guding, 
+                type = 'scatter', 
+                name = "全国固定资产投资",
+                mode='lines',line=list(color='#867892')) %>% 
+  
+                add_trace(x = ~Time, 
+                          y = ~Minjian, 
+                          type="scatter", 
+                          name="民间投资",   
+                          mode='lines',line=list(color='#83D6C0')) %>% 
+  
+  layout(
+    title = "固定资产投资、民间投资增速分析趋势图",
+    xaxis = list(title="时间", showgrid = T),
+    yaxis = list(title="数值", showgrid = T),
+    showlegend = TRUE
+    #annotations = list(list(x = Industrial_Speed_Up$Time, y = Industrial_Speed_Up$IndustrialAdd,text="Peak",showarrow = T))
+  )
+
+
+```
+
+
+
+
+
+
+
+
+
+
+各行业投资分析 {data-navmenu="宏观经济——投资"} 
+====================================
+
+
+
+
+
+
+Column {data-height = 10}
+-------------------------------------
+### 各行业投资分析
+```{r}
+# 右边图片上的注释
+obs <- "各行业投资分析" 
+valueBox(obs, icon="fa-pencil") 
+```
+
+### 趋势分析
+
+
+```{r fig.width=7, fig.height=5}
+
+# 绘制趋势图
+plotly::plot_ly(InvestAll_1, 
+                x = ~Time, # 横坐标
+                y = ~Nongye, 
+                type = 'scatter', 
+                name = "农业",
+                mode='lines',line=list(color='#867892')) %>% 
+  
+                add_trace(x = ~Time, 
+                          y = ~Zhizao, 
+                          type="scatter", 
+                          name="制造业",   
+                          mode='lines',line=list(color='#83D6C0')) %>% 
+  
+                add_trace(x = ~Time, 
+                          y = ~Fangdichan, 
+                          type="scatter", 
+                          name="房地产",   
+                          mode='lines',line=list(color='#EF645B')) %>% 
+  
+                add_trace(x = ~Time, 
+                          y = ~Jichusheshi, 
+                          type="scatter", 
+                          name="基础设施",   
+                          mode='lines+markers',line=list(color='#9b95c9')) %>% 
+  
+  
+  
+  layout(
+    title = "各行业投资分析趋势图",
+    xaxis = list(title="时间", showgrid = T),
+    yaxis = list(title="数值", showgrid = T),
+    showlegend = TRUE
+    #annotations = list(list(x = Industrial_Speed_Up$Time, y = Industrial_Speed_Up$IndustrialAdd,text="Peak",showarrow = T))
+  )
+
+
+```
+
+
+
+
+
+
+
+
+社会零售总额、社会消费总额增速分析 {data-navmenu="宏观经济——消费"} 
+====================================
+
+Column {.tabset}
+-------------------------------------
+
+### 社会零售总额、社会消费总额增速分析
+
+```{r fig.width=5}
+# 函数datatable在HTML中插入表格
+# DT packages提供了JavaScript库中的DataTables的一个R接口，使得R对象能在HTML页面上显示为表格
+DT::datatable(CunsumerAll_1,  
+              caption = htmltools::tags$caption('', style='font-size:18px; text-align:left, color:black; font-weight:bold'), 
+              # extensions = 'AutoFill', 
+              
+              # 具体的设置情况
+              options = list(initComplete = 
+                        JS(
+                            "function(settings, jason) {", 
+                            "$(this.api().table().header()).css({'background-color': '#4682B4',
+                                                                 'color': '#fff',
+                                                                 'font-size': '15px',
+                                                                 'font-weight': 'normal', 
+                                                                 'font-family': 'Microsoft YaHei'});",
+                            "$('body').css({'font-size':'14px','font-family': 'Microsoft YaHei'});}"
+                          ), 
+                         # autoFill=list(focus='click'),
+                         # colReorder=list(realtime=TRUE),
+                         # scrollX=TRUE,
+                         searchHight = TRUE, 
+                         language = list( info = '显示第_START_至_END_项结果，共_TOTAL_项',
+                                          search = '搜索:',
+                                          paginate = list(previous = '上页', 'next' = '下页'),
+                                          lengthMenu = '显示_MENU_项结果'),
+                         columnDefs=list(list(className='dt[-body]-center',targets='_all')),
+                         pageLength=30, 
+                        lengthMenu=c(30, 40, 50, 60, 70)
+                        ),
+              class='cell-border stripe',
+              # HTML上每一列的名字
+              colnames=CunsumerAll_1_cn
+              )
+```
+
+
+
+Column {data-height = 10}
+-------------------------------------
+### 社会零售总额、社会消费总额增速分析趋势图
+```{r}
+# 右边图片上的注释
+obs <- "社会零售总额、社会消费总额增速分析趋势图" 
+valueBox(obs, icon="fa-pencil") 
+```
+
+### 趋势分析
+
+
+```{r fig.width=7, fig.height=5}
+
+# 绘制趋势图
+plotly::plot_ly(CunsumerAll_1, 
+                x = ~Time, # 横坐标
+                y = ~SheXiao, 
+                type = 'scatter', 
+                name = "社会零售消费增速",
+                mode='lines',line=list(color='#867892')) %>% 
+  
+                add_trace(x = ~Time, 
+                          y = ~ShexiaoShiJi, 
+                          type="scatter", 
+                          name="社会零售消费实际增速",   
+                          mode='lines',line=list(color='#83D6C0')) %>% 
+  
+                add_trace(x = ~Time, 
+                          y = ~Xiane, 
+                          type="scatter", 
+                          name="限额以上零售增速",   
+                          mode='lines',line=list(color='#EF645B')) %>% 
+  
+  
+  layout(
+    title = "社会零售总额、社会消费总额增速分析",
+    xaxis = list(title="时间", showgrid = T),
+    yaxis = list(title="数值", showgrid = T),
+    showlegend = TRUE
+    #annotations = list(list(x = Industrial_Speed_Up$Time, y = Industrial_Speed_Up$IndustrialAdd,text="Peak",showarrow = T))
+  )
+
+
+```
+
+
+
+
+
+
+
+必须品零售增速分析 {data-navmenu="宏观经济——消费"} 
+====================================
+
+Column {.tabset}
+-------------------------------------
+
+### 必须品零售增速分析
+
+
+```{r fig.width=5}
+# 函数datatable在HTML中插入表格
+# DT packages提供了JavaScript库中的DataTables的一个R接口，使得R对象能在HTML页面上显示为表格
+DT::datatable(CunsumerAll_2,  
+              caption = htmltools::tags$caption('', style='font-size:18px; text-align:left, color:black; font-weight:bold'), 
+              # extensions = 'AutoFill', 
+              
+              # 具体的设置情况
+              options = list(initComplete = 
+                        JS(
+                            "function(settings, jason) {", 
+                            "$(this.api().table().header()).css({'background-color': '#4682B4',
+                                                                 'color': '#fff',
+                                                                 'font-size': '15px',
+                                                                 'font-weight': 'normal', 
+                                                                 'font-family': 'Microsoft YaHei'});",
+                            "$('body').css({'font-size':'14px','font-family': 'Microsoft YaHei'});}"
+                          ), 
+                         # autoFill=list(focus='click'),
+                         # colReorder=list(realtime=TRUE),
+                         # scrollX=TRUE,
+                         searchHight = TRUE, 
+                         language = list( info = '显示第_START_至_END_项结果，共_TOTAL_项',
+                                          search = '搜索:',
+                                          paginate = list(previous = '上页', 'next' = '下页'),
+                                          lengthMenu = '显示_MENU_项结果'),
+                         columnDefs=list(list(className='dt[-body]-center',targets='_all')),
+                         pageLength=30, 
+                        lengthMenu=c(30, 40, 50, 60, 70)
+                        ),
+              class='cell-border stripe',
+              # HTML上每一列的名字
+              colnames=CunsumerAll_2_cn
+              )
+```
+
+
+
+
+
+Column {data-height = 10}
+-------------------------------------
+### 必须品零售增速分析趋势图
+```{r}
+# 右边图片上的注释
+obs <- "必须品零售增速分析趋势图" 
+valueBox(obs, icon="fa-pencil") 
+```
+
+### 趋势分析
+
+
+```{r fig.width=7, fig.height=5}
+
+# 绘制趋势图
+plotly::plot_ly(CunsumerAll_2, 
+                x = ~Time, # 横坐标
+                y = ~Liang, 
+                type = 'scatter', 
+                name = "粮油食品饮料烟酒类",
+                mode='lines',line=list(color='#867892')) %>% 
+  
+                add_trace(x = ~Time, 
+                          y = ~Fuzhuang, 
+                          type="scatter", 
+                          name="服装鞋帽针纺织类",   
+                          mode='lines',line=list(color='#83D6C0')) %>% 
+  
+                add_trace(x = ~Time, 
+                          y = ~RiYong, 
+                          type="scatter", 
+                          name="日用品类",   
+                          mode='lines',line=list(color='#EF645B')) %>% 
+  
+  
+  layout(
+    title = "必须品零售增速分析趋势图",
+    xaxis = list(title="时间", showgrid = T),
+    yaxis = list(title="数值", showgrid = T),
+    showlegend = TRUE
+    #annotations = list(list(x = Industrial_Speed_Up$Time, y = Industrial_Speed_Up$IndustrialAdd,text="Peak",showarrow = T))
+  )
+
+
+```
+
+
+
+
+
+
+
+
+汽车类零售增速分析 {data-navmenu="宏观经济——消费"} 
+====================================
+
+Column {.tabset}
+-------------------------------------
+
+### 汽车类零售增速分析
+
+
+```{r fig.width=5}
+# 函数datatable在HTML中插入表格
+# DT packages提供了JavaScript库中的DataTables的一个R接口，使得R对象能在HTML页面上显示为表格
+DT::datatable(CunsumerAll_3,  
+              caption = htmltools::tags$caption('', style='font-size:18px; text-align:left, color:black; font-weight:bold'), 
+              # extensions = 'AutoFill', 
+              
+              # 具体的设置情况
+              options = list(initComplete = 
+                        JS(
+                            "function(settings, jason) {", 
+                            "$(this.api().table().header()).css({'background-color': '#4682B4',
+                                                                 'color': '#fff',
+                                                                 'font-size': '15px',
+                                                                 'font-weight': 'normal', 
+                                                                 'font-family': 'Microsoft YaHei'});",
+                            "$('body').css({'font-size':'14px','font-family': 'Microsoft YaHei'});}"
+                          ), 
+                         # autoFill=list(focus='click'),
+                         # colReorder=list(realtime=TRUE),
+                         # scrollX=TRUE,
+                         searchHight = TRUE, 
+                         language = list( info = '显示第_START_至_END_项结果，共_TOTAL_项',
+                                          search = '搜索:',
+                                          paginate = list(previous = '上页', 'next' = '下页'),
+                                          lengthMenu = '显示_MENU_项结果'),
+                         columnDefs=list(list(className='dt[-body]-center',targets='_all')),
+                         pageLength=30, 
+                        lengthMenu=c(30, 40, 50, 60, 70)
+                        ),
+              class='cell-border stripe',
+              # HTML上每一列的名字
+              colnames=CunsumerAll_3_cn
+              )
+```
+
+
+
+
+
+
+Column {data-height = 10}
+-------------------------------------
+### 汽车类零售增速分析趋势图
+```{r}
+# 右边图片上的注释
+obs <- "汽车类零售增速分析趋势图" 
+valueBox(obs, icon="fa-pencil") 
+```
+
+### 趋势分析
+
+
+```{r fig.width=7, fig.height=5}
+
+# 绘制趋势图
+plotly::plot_ly(CunsumerAll_3, 
+                x = ~Time, # 横坐标
+                y = ~Qiche, 
+                type = 'scatter', 
+                name = "汽车类",
+                mode='lines',line=list(color='#867892')) %>% 
+ 
+  
+  layout(
+    title = "汽车类零售增速分析趋势图",
+    xaxis = list(title="时间", showgrid = T),
+    yaxis = list(title="数值", showgrid = T),
+    showlegend = TRUE
+    #annotations = list(list(x = Industrial_Speed_Up$Time, y = Industrial_Speed_Up$IndustrialAdd,text="Peak",showarrow = T))
+  )
+
+
+```
+
+
+
+
+
+
+
+
+
+石油及制品类增速分析 {data-navmenu="宏观经济——消费"} 
+====================================
+
+Column {.tabset}
+-------------------------------------
+
+### 石油及制品类增速分析
+
+
+
+```{r fig.width=5}
+# 函数datatable在HTML中插入表格
+# DT packages提供了JavaScript库中的DataTables的一个R接口，使得R对象能在HTML页面上显示为表格
+DT::datatable(CunsumerAll_4,  
+              caption = htmltools::tags$caption('', style='font-size:18px; text-align:left, color:black; font-weight:bold'), 
+              # extensions = 'AutoFill', 
+              
+              # 具体的设置情况
+              options = list(initComplete = 
+                        JS(
+                            "function(settings, jason) {", 
+                            "$(this.api().table().header()).css({'background-color': '#4682B4',
+                                                                 'color': '#fff',
+                                                                 'font-size': '15px',
+                                                                 'font-weight': 'normal', 
+                                                                 'font-family': 'Microsoft YaHei'});",
+                            "$('body').css({'font-size':'14px','font-family': 'Microsoft YaHei'});}"
+                          ), 
+                         # autoFill=list(focus='click'),
+                         # colReorder=list(realtime=TRUE),
+                         # scrollX=TRUE,
+                         searchHight = TRUE, 
+                         language = list( info = '显示第_START_至_END_项结果，共_TOTAL_项',
+                                          search = '搜索:',
+                                          paginate = list(previous = '上页', 'next' = '下页'),
+                                          lengthMenu = '显示_MENU_项结果'),
+                         columnDefs=list(list(className='dt[-body]-center',targets='_all')),
+                         pageLength=30, 
+                        lengthMenu=c(30, 40, 50, 60, 70)
+                        ),
+              class='cell-border stripe',
+              # HTML上每一列的名字
+              colnames=CunsumerAll_4_cn
+              )
+```
+
+
+
+
+Column {data-height = 10}
+-------------------------------------
+### 石油类零售增速分析趋势图
+```{r}
+# 右边图片上的注释
+obs <- "石油类零售增速分析趋势图" 
+valueBox(obs, icon="fa-pencil") 
+```
+
+### 趋势分析
+
+
+```{r fig.width=7, fig.height=5}
+
+# 绘制趋势图
+plotly::plot_ly(CunsumerAll_4, 
+                x = ~Time, # 横坐标
+                y = ~Shiyou, 
+                type = 'scatter', 
+                name = "石油类",
+                mode='lines',line=list(color='#83D6C0')) %>% 
+ 
+  
+  layout(
+    title = "石油类零售增速分析趋势图",
+    xaxis = list(title="时间", showgrid = T),
+    yaxis = list(title="数值", showgrid = T),
+    showlegend = TRUE
+    #annotations = list(list(x = Industrial_Speed_Up$Time, y = Industrial_Speed_Up$IndustrialAdd,text="Peak",showarrow = T))
+  )
+
+
+```
+
+
+
+
+
+
+
+
+
+家居建材类增速分析{data-navmenu="宏观经济——消费"} 
+====================================
+
+Column {.tabset}
+-------------------------------------
+
+### 家居建材类增速分析
+
+
+
+```{r fig.width=5}
+# 函数datatable在HTML中插入表格
+# DT packages提供了JavaScript库中的DataTables的一个R接口，使得R对象能在HTML页面上显示为表格
+DT::datatable(CunsumerAll_5,  
+              caption = htmltools::tags$caption('', style='font-size:18px; text-align:left, color:black; font-weight:bold'), 
+              # extensions = 'AutoFill', 
+              
+              # 具体的设置情况
+              options = list(initComplete = 
+                        JS(
+                            "function(settings, jason) {", 
+                            "$(this.api().table().header()).css({'background-color': '#4682B4',
+                                                                 'color': '#fff',
+                                                                 'font-size': '15px',
+                                                                 'font-weight': 'normal', 
+                                                                 'font-family': 'Microsoft YaHei'});",
+                            "$('body').css({'font-size':'14px','font-family': 'Microsoft YaHei'});}"
+                          ), 
+                         # autoFill=list(focus='click'),
+                         # colReorder=list(realtime=TRUE),
+                         # scrollX=TRUE,
+                         searchHight = TRUE, 
+                         language = list( info = '显示第_START_至_END_项结果，共_TOTAL_项',
+                                          search = '搜索:',
+                                          paginate = list(previous = '上页', 'next' = '下页'),
+                                          lengthMenu = '显示_MENU_项结果'),
+                         columnDefs=list(list(className='dt[-body]-center',targets='_all')),
+                         pageLength=30, 
+                        lengthMenu=c(30, 40, 50, 60, 70)
+                        ),
+              class='cell-border stripe',
+              # HTML上每一列的名字
+              colnames=CunsumerAll_5_cn
+              )
+```
+
+
+
+
+Column {data-height = 10}
+-------------------------------------
+### 家居建材类增速分析趋势图
+```{r}
+# 右边图片上的注释
+obs <- "家居建材类增速分析趋势图" 
+valueBox(obs, icon="fa-pencil") 
+```
+
+### 趋势分析
+
+
+```{r fig.width=7, fig.height=5}
+
+# 绘制趋势图
+plotly::plot_ly(CunsumerAll_5, 
+                x = ~Time, # 横坐标
+                y = ~Jiadian, 
+                type = 'scatter', 
+                name = "家用电器和音像器材类",
+                mode='lines',line=list(color='#867892')) %>% 
+  
+                add_trace(x = ~Time, 
+                          y = ~JiaJu, 
+                          type="scatter", 
+                          name="家具类",   
+                          mode='lines',line=list(color='#83D6C0')) %>% 
+  
+                add_trace(x = ~Time, 
+                          y = ~JianCai, 
+                          type="scatter", 
+                          name="建筑及装潢材料类",   
+                          mode='lines',line=list(color='#EF645B')) %>% 
+  
+  
+  layout(
+    title = "家居建材类增速分析趋势图",
+    xaxis = list(title="时间", showgrid = T),
+    yaxis = list(title="数值", showgrid = T),
+    showlegend = TRUE
+    #annotations = list(list(x = Industrial_Speed_Up$Time, y = Industrial_Speed_Up$IndustrialAdd,text="Peak",showarrow = T))
+  )
+
+
+```
+
+
+
+
+
+
+
+全国商品房销售面积增速分析{data-navmenu="宏观经济——房地产"} 
+====================================
+
+
+
+Column {data-height = 10}
+-------------------------------------
+### 商品房销售面积分析趋势图
+```{r}
+# 右边图片上的注释
+obs <- "商品房销售面积分析趋势图" 
+valueBox(obs, icon="fa-pencil") 
+```
+
+### 趋势分析
+
+
+```{r fig.width=7, fig.height=5}
+
+# 绘制趋势图
+plotly::plot_ly(HouseAll, 
+                x = ~Time, # 横坐标
+                y = ~XiaoShou, 
+                type = 'scatter', 
+                name = "商品房销售面积累计同比增速",
+                mode='lines',line=list(color='#EF645B')) %>% 
+  
+  layout(
+    title = "商品房销售面积增速分析趋势图",
+    xaxis = list(title="时间", showgrid = T),
+    yaxis = list(title="数值", showgrid = T),
+    showlegend = TRUE
+    #annotations = list(list(x = Industrial_Speed_Up$Time, y = Industrial_Speed_Up$IndustrialAdd,text="Peak",showarrow = T))
+  )
+
+
+```
+
+
+
+
+
+
+
+
+
+
+Column {data-height = 10}
+-------------------------------------
+### 70城新建商品住宅价格指数分析趋势图
+```{r}
+# 右边图片上的注释
+obs <- "70城新建商品住宅价格指数分析趋势图" 
+valueBox(obs, icon="fa-pencil") 
+```
+
+### 趋势分析
+
+
+```{r fig.width=7, fig.height=5}
+
+# 绘制趋势图
+plotly::plot_ly(HouseAll, 
+                x = ~Time, # 横坐标
+                y = ~Dy70, 
+                type = 'scatter', 
+                name = "70城新建商品住宅价格指数同比增速",
+                mode='lines',line=list(color='#867892')) %>% 
+  
+                add_trace(x = ~Time, 
+                          y = ~Hb70, 
+                          type="bar", 
+                          name="70城新建商品住宅价格指数环比增速",   
+                          mode='bar',line=list(color='#83D6C0')) %>% 
+  
+  layout(
+    title = "70城新建商品住宅价格指数环比增速趋势图",
+    xaxis = list(title="时间", showgrid = T),
+    yaxis = list(title="数值", showgrid = T),
+    showlegend = TRUE
+    #annotations = list(list(x = Industrial_Speed_Up$Time, y = Industrial_Speed_Up$IndustrialAdd,text="Peak",showarrow = T))
+  )
+
+
+```
+
+
+房地产投资、新开发面积增速分析{data-navmenu="宏观经济——房地产"} 
+====================================
+
+
+
+Column {data-height = 10}
+-------------------------------------
+### 房地产投资增速分析趋势图
+```{r}
+# 右边图片上的注释
+obs <- "房地产投资增速分析趋势图" 
+valueBox(obs, icon="fa-pencil") 
+```
+
+### 趋势分析
+
+
+```{r fig.width=7, fig.height=5}
+
+# 绘制趋势图
+plotly::plot_ly(HouseAll, 
+                x = ~Time, # 横坐标
+                y = ~Wancheng, 
+                type = 'scatter', 
+                name = "房地产开发完成投资额",
+                mode='lines',line=list(color='#867892')) %>% 
+  
+                add_trace(x = ~Time, 
+                          y = ~Touzi,
+                          type="scatter", 
+                          name="房地产开发资金来源",   
+                          mode='lins',line=list(color='#83D6C0')) %>% 
+  
+  layout(
+    title = "房地产投资增速分析趋势图",
+    xaxis = list(title="时间", showgrid = T),
+    yaxis = list(title="数值", showgrid = T),
+    showlegend = TRUE
+    #annotations = list(list(x = Industrial_Speed_Up$Time, y = Industrial_Speed_Up$IndustrialAdd,text="Peak",showarrow = T))
+  )
+
+
+```
+
+
+
+
+Column {data-height = 10}
+-------------------------------------
+### 全国房屋新开工面积增速趋势图
+```{r}
+# 右边图片上的注释
+obs <- "全国房屋新开工面积增速趋势图" 
+valueBox(obs, icon="fa-pencil") 
+```
+
+### 趋势分析
+
+
+```{r fig.width=7, fig.height=5}
+
+# 绘制趋势图
+plotly::plot_ly(HouseAll, 
+                x = ~Time, # 横坐标
+                y = ~Kaigong, 
+                type = 'scatter', 
+                name = "房屋新开工面积累计同比",
+                mode='lines',line=list(color='#867892')) %>% 
+  
+
+  layout(
+    title = "全国房屋新开工面积增速趋势图",
+    xaxis = list(title="时间", showgrid = T),
+    yaxis = list(title="数值", showgrid = T),
+    showlegend = TRUE
+    #annotations = list(list(x = Industrial_Speed_Up$Time, y = Industrial_Speed_Up$IndustrialAdd,text="Peak",showarrow = T))
+  )
+
+
+```
+
+
+
+
+
